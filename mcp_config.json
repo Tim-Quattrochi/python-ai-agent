@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "python-ai-agent": {
+      "command": "python",
+      "args": ["/Users/timq8/python-ai-agent/mcp_server.py"],
+      "env": {
+        "PYTHONPATH": "/Users/timq8/python-ai-agent"
+      }
+    }
+  }
+}

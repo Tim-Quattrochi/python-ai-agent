@@ -10,6 +10,17 @@ from .tools.base import Tool, ToolRegistry
 from .tools.calculator import CalculatorTool
 from .tools.web_search import WebSearchTool
 from .tools.file_ops import FileOperationsTool
+from .tools.task_scheduler import TaskSchedulerTool
+from .tools.email_sender import EmailSenderTool
+from .tools.todo_manager import TodoManagerTool
+from .tools.database import DatabaseTool
+from .tools.image_processing import ImageProcessingTool
+from .tools.github import GitHubTool
+from .tools.weather import WeatherTool
+from .tools.content_generator import ContentGeneratorTool
+from .tools.ml_tool import MLTool
+from .tools.slack_integration import SlackTool
+from .tools.system_monitor import SystemMonitorTool
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -79,6 +90,24 @@ Remember to think step by step and use the appropriate tools to provide accurate
         self.register_tool(CalculatorTool())
         self.register_tool(WebSearchTool())
         self.register_tool(FileOperationsTool())
+
+        # Register task automation tools
+        self.register_tool(TaskSchedulerTool())
+        self.register_tool(EmailSenderTool())
+        self.register_tool(TodoManagerTool())
+
+        # Register data and development tools
+        self.register_tool(DatabaseTool())
+        self.register_tool(ImageProcessingTool())
+        self.register_tool(GitHubTool())
+        self.register_tool(WeatherTool())
+
+        # Register advanced tools
+        self.register_tool(ContentGeneratorTool())
+        self.register_tool(MLTool())
+        self.register_tool(SlackTool())
+        self.register_tool(SystemMonitorTool())
+
         logger.info("All tools registered successfully")
 
     def register_tool(self, tool: Tool):
@@ -89,6 +118,34 @@ Remember to think step by step and use the appropriate tools to provide accurate
     def process_message(self, user_input: str) -> str:
         """Process a user message and return the agent's response."""
         try:
+            # Check for tool-specific interactions
+            if user_input.lower() in ['email_sender', 'email', 'task_scheduler', 'tasks', 'todo_manager', 'todo']:
+                # Provide a helpful guide for tool usage
+                tool_guides = {
+                    'email_sender': "Email Sender Tool Operations:\n"
+                                    "- 'draft': Save an email draft\n"
+                                    "- 'send': Send an email\n"
+                                    "- 'list_drafts': Show saved drafts\n"
+                                    "Example: 'draft an email to team'",
+                    'task_scheduler': "Task Scheduler Operations:\n"
+                                      "- 'schedule': Create a new task\n"
+                                      "- 'list': Show tasks\n"
+                                      "- 'complete': Mark task as done\n"
+                                      "- 'overdue': Show overdue tasks\n"
+                                      "Example: 'schedule a meeting next week'",
+                    'todo_manager': "Todo Manager Operations:\n"
+                                    "- 'add': Create a new todo\n"
+                                    "- 'list': Show todos\n"
+                                    "- 'complete': Mark todo as done\n"
+                                    "- 'stats': Get todo statistics\n"
+                                    "Example: 'add todo to review reports'"
+                }
+
+                # Get the tool name
+                tool_name = user_input.lower().replace('_', ' ').replace(' ', '_')
+
+                return tool_guides.get(tool_name, "Tool not found. Please specify a valid operation.")
+
             # Add user message to conversation
             user_message = Message(role="user", content=user_input)
             self.conversation_state.add_message(user_message)
@@ -114,6 +171,7 @@ Remember to think step by step and use the appropriate tools to provide accurate
         """Generate a response, handling tool calls if necessary."""
         max_iterations = self.config.max_tool_calls_per_turn
         iteration = 0
+        current_messages = messages.copy()
 
         while iteration < max_iterations:
             iteration += 1
@@ -122,14 +180,15 @@ Remember to think step by step and use the appropriate tools to provide accurate
             tools = self.tool_registry.get_tools_schema()
 
             # Generate response from LLM
-            response = self.llm_client.generate_response(messages, tools)
+            response = self.llm_client.generate_response(
+                current_messages, tools)
 
             # Add assistant message to conversation
             self.conversation_state.add_message(response)
 
             # Check if there are tool calls to execute
             if not response.tool_calls:
-                # No tool calls, return the response
+                # No tool calls, return the response content
                 return response.content
 
             # Execute tool calls
@@ -143,14 +202,14 @@ Remember to think step by step and use the appropriate tools to provide accurate
                     tool_call_id=tool_call["id"]
                 )
                 self.conversation_state.add_message(tool_message)
-                messages.append(tool_message)
+                current_messages.append(tool_message)
 
-            # Continue the loop to get the final response after tool execution
+            # Continue the loop to let the LLM respond to the tool results
 
-        # If we've hit the max iterations, return the last response
+        # If we've hit the max iterations, return the last response content
         logger.warning(
             f"Reached maximum tool call iterations ({max_iterations})")
-        return response.content
+        return response.content if 'response' in locals() else "Maximum iterations reached without a final response."
 
     def _execute_tool_call(self, tool_call: Dict[str, Any]) -> str:
         """Execute a single tool call and return the result."""

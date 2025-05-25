@@ -3,6 +3,7 @@
 import json
 from typing import List, Dict, Any, Optional, Union
 from abc import ABC, abstractmethod
+import requests
 
 import openai
 import anthropic
@@ -174,11 +175,76 @@ class OpenAIClient(LLMClient):
             raise Exception(f"OpenAI API error: {str(e)}")
 
 
+class LocalLLMClient(LLMClient):
+    """Client for local LLM servers (like llama.cpp server)."""
+
+    def __init__(self, config: Config):
+        self.config = config
+        self.base_url = config.local_llm_url
+
+    def generate_response(self, messages: List[Message], tools: Optional[List[Dict]] = None) -> Message:
+        """Generate response from local LLM server."""
+        import requests
+
+        # Convert messages to OpenAI-compatible format
+        openai_messages = [msg.to_dict() for msg in messages]
+
+        payload = {
+            "model": self.config.current_model,
+            "messages": openai_messages,
+            "temperature": 0.1 if tools else 0.7,  # Lower temperature for tool calling
+            "max_tokens": 2000
+        }
+
+        # Add tools if provided
+        if tools:
+            payload["tools"] = tools
+
+        try:
+            response = requests.post(
+                f"{self.base_url.rstrip('/')}/v1/chat/completions",
+                json=payload,
+                headers={"Content-Type": "application/json"},
+                timeout=30
+            )
+            response.raise_for_status()
+
+            result = response.json()
+            choice = result["choices"][0]
+            message_data = choice["message"]
+
+            # Handle tool calls - check finish_reason first
+            tool_calls = []
+            if choice.get("finish_reason") == "tool_calls" and message_data.get("tool_calls"):
+                tool_calls = [
+                    {
+                        "id": tc.get("id"),
+                        "type": tc.get("type", "function"),
+                        "function": {
+                            "name": tc["function"]["name"],
+                            "arguments": tc["function"]["arguments"]
+                        }
+                    }
+                    for tc in message_data["tool_calls"]
+                ]
+
+            return Message(
+                role="assistant",
+                content=message_data.get("content", ""),
+                tool_calls=tool_calls if tool_calls else None
+            )
+
+        except Exception as e:
+            raise Exception(f"Local LLM server error: {str(e)}")
+
+
 def create_llm_client(config: Config) -> LLMClient:
     """Factory function to create the appropriate LLM client."""
     if config.llm_provider == "anthropic":
         return AnthropicClient(config)
     elif config.llm_provider == "openai":
         return OpenAIClient(config)
+    elif config.llm_provider == "local":
+        return LocalLLMClient(config)
     else:
         raise ValueError(f"Unsupported LLM provider: {config.llm_provider}")

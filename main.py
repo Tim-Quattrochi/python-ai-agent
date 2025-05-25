@@ -3,6 +3,8 @@
 Main CLI interface for the Python AI Agent.
 """
 
+from src.config import Config
+from src.agent import Agent
 import sys
 import os
 import argparse
@@ -10,9 +12,6 @@ from pathlib import Path
 
 # Add src to path so we can import our modules
 sys.path.insert(0, str(Path(__file__).parent / "src"))
-
-from src.agent import Agent
-from src.config import Config
 
 
 def print_banner():
@@ -30,12 +29,12 @@ def print_banner():
 def main():
     """Main entry point for the agent CLI."""
     parser = argparse.ArgumentParser(description="Python AI Agent CLI")
-    parser.add_argument("--provider", choices=["anthropic", "openai"], 
-                       help="LLM provider to use")
+    parser.add_argument("--provider", choices=["anthropic", "openai", "local"],
+                        help="LLM provider to use")
     parser.add_argument("--model", help="Model to use")
-    parser.add_argument("--verbose", action="store_true", 
-                       help="Enable verbose logging")
-    
+    parser.add_argument("--verbose", action="store_true",
+                        help="Enable verbose logging")
+
     args = parser.parse_args()
 
     # Check for environment file
@@ -48,7 +47,7 @@ def main():
     try:
         # Create config
         config = Config()
-        
+
         # Override config with command line arguments
         if args.provider:
             config.llm_provider = args.provider
@@ -61,20 +60,21 @@ def main():
         # Initialize agent
         print("🚀 Initializing agent...")
         agent = Agent(config)
-        
-        print(f"✅ Agent ready! Using {config.llm_provider} with model {config.current_model}")
+
+        print(
+            f"✅ Agent ready! Using {config.llm_provider} with model {config.current_model}")
         print(f"📋 Available tools: {', '.join(agent.get_available_tools())}")
-        
+
         print_banner()
 
         # Main conversation loop
         while True:
             try:
                 user_input = input("\n👤 You: ").strip()
-                
+
                 if not user_input:
                     continue
-                    
+
                 # Handle special commands
                 if user_input.lower() in ['exit', 'quit', 'bye']:
                     print("👋 Goodbye!")
@@ -89,12 +89,12 @@ def main():
                 elif user_input.lower() == 'help':
                     print_banner()
                     continue
-                
+
                 # Process the message
                 print("🤖 Assistant:", end=" ", flush=True)
                 response = agent.process_message(user_input)
                 print(response)
-                
+
             except KeyboardInterrupt:
                 print("\n\n👋 Goodbye!")
                 break
