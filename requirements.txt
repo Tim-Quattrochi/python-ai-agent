@@ -77,3 +77,12 @@ urllib3==2.4.0
 uvicorn==0.34.2
 websockets==15.0.1
 wrapt==1.17.2
+
+# Job Automation Dependencies
+beautifulsoup4==4.12.3
+selenium==4.27.1
+pdfplumber==0.11.4
+PyPDF2==3.0.1
+python-docx==1.1.2
+reportlab==4.2.5
+linkedin-api==2.3.0

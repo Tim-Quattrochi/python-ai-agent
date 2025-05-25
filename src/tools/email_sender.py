@@ -63,7 +63,7 @@ class EmailSenderTool(Tool):
             logger.error(f"Email sender error: {e}")
             return f"Error executing {operation}: {str(e)}"
 
-    def _send_email(self, to: str, subject: str, body: str, cc: Optional[str] = None, 
+    def _send_email(self, to: str, subject: str, body: str, cc: Optional[str] = None,
                     attachments: Optional[List[str]] = None, draft_id: Optional[int] = None) -> str:
         """Send an email via SMTP with enhanced logging and feedback."""
         # Check if we're sending from a draft
@@ -127,18 +127,22 @@ class EmailSenderTool(Tool):
                 attachment_count = 0
                 for attachment_path in attachments:
                     try:
-                        attachment_result = self._add_attachment(msg, attachment_path)
+                        attachment_result = self._add_attachment(
+                            msg, attachment_path)
                         if attachment_result:
                             attachment_count += 1
                             logger.info(f"Attached file: {attachment_path}")
                         else:
-                            logger.warning(f"Failed to attach file: {attachment_path}")
+                            logger.warning(
+                                f"Failed to attach file: {attachment_path}")
                     except Exception as e:
-                        logger.error(f"Error attaching file {attachment_path}: {e}")
-                
+                        logger.error(
+                            f"Error attaching file {attachment_path}: {e}")
+
                 if attachment_count > 0:
-                    logger.info(f"Successfully attached {attachment_count} file(s)")
-            
+                    logger.info(
+                        f"Successfully attached {attachment_count} file(s)")
+
             # Connect to SMTP server and send
             logger.info("Connecting to SMTP server...")
             with smtplib.SMTP(self.smtp_host, self.smtp_port) as server:
@@ -165,7 +169,7 @@ class EmailSenderTool(Tool):
 
             if cc:
                 success_msg += f"\n📎 CC: {cc}"
-            
+
             if attachments:
                 success_msg += f"\n📎 Attachments: {len(attachments)} file(s)"
                 for attachment in attachments:
@@ -215,49 +219,51 @@ class EmailSenderTool(Tool):
             if not file_path_obj.exists():
                 logger.error(f"Attachment file not found: {file_path}")
                 return False
-            
+
             if not file_path_obj.is_file():
                 logger.error(f"Attachment path is not a file: {file_path}")
                 return False
-            
+
             # Check file size (limit to 25MB)
             max_size = 25 * 1024 * 1024  # 25MB in bytes
             file_size = file_path_obj.stat().st_size
             if file_size > max_size:
-                logger.error(f"Attachment too large ({file_size} bytes, max {max_size}): {file_path}")
+                logger.error(
+                    f"Attachment too large ({file_size} bytes, max {max_size}): {file_path}")
                 return False
-            
+
             # Guess content type
             content_type, encoding = mimetypes.guess_type(file_path)
             if content_type is None or encoding is not None:
                 content_type = 'application/octet-stream'
-            
+
             # Read file and create attachment
             with open(file_path, 'rb') as attachment_file:
                 file_data = attachment_file.read()
-            
+
             # Create appropriate MIME object based on content type
             if content_type.startswith('text/'):
                 attachment = MIMEText(file_data.decode('utf-8'), 'plain')
             else:
-                attachment = MIMEApplication(file_data, _subtype=content_type.split('/')[-1])
-            
+                attachment = MIMEApplication(
+                    file_data, _subtype=content_type.split('/')[-1])
+
             # Set filename
             filename = file_path_obj.name
             attachment.add_header(
                 'Content-Disposition',
                 f'attachment; filename="{filename}"'
             )
-            
+
             # Attach to message
             msg.attach(attachment)
             return True
-            
+
         except Exception as e:
             logger.error(f"Error adding attachment {file_path}: {e}")
             return False
 
-    def _save_draft(self, to: str, subject: str, body: str, cc: Optional[str] = None, 
+    def _save_draft(self, to: str, subject: str, body: str, cc: Optional[str] = None,
                     attachments: Optional[List[str]] = None) -> str:
         """Save an email as draft."""
         draft = {
