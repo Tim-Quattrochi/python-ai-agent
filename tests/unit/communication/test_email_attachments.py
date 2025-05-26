@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Test script for email attachment functionality."""
 
-from tools.email_sender import EmailSenderTool
+from src.tools.email_sender import EmailSenderTool
 import os
 import sys
 import tempfile

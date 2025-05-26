@@ -21,6 +21,7 @@ from .tools.content_generator import ContentGeneratorTool
 from .tools.ml_tool import MLTool
 from .tools.slack_integration import SlackTool
 from .tools.system_monitor import SystemMonitorTool
+from .tools.job_automation import ScrapingAntJobScraper
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -87,33 +88,58 @@ Remember to think step by step and use the appropriate tools to provide accurate
     def _register_tools(self):
         """Register all available tools."""
         # Register core tools
-        self.register_tool(CalculatorTool())
-        self.register_tool(WebSearchTool())
-        self.register_tool(FileOperationsTool())
+        self.tool_registry.register_tool(CalculatorTool())
+        self.tool_registry.register_tool(WebSearchTool())
+        self.tool_registry.register_tool(FileOperationsTool())
 
         # Register task automation tools
-        self.register_tool(TaskSchedulerTool())
-        self.register_tool(EmailSenderTool())
-        self.register_tool(TodoManagerTool())
+        self.tool_registry.register_tool(TaskSchedulerTool())
+        self.tool_registry.register_tool(EmailSenderTool())
+        self.tool_registry.register_tool(TodoManagerTool())
 
         # Register data and development tools
-        self.register_tool(DatabaseTool())
-        self.register_tool(ImageProcessingTool())
-        self.register_tool(GitHubTool())
-        self.register_tool(WeatherTool())
+        self.tool_registry.register_tool(DatabaseTool())
+        self.tool_registry.register_tool(ImageProcessingTool())
+        self.tool_registry.register_tool(GitHubTool())
+        self.tool_registry.register_tool(WeatherTool())
 
         # Register advanced tools
-        self.register_tool(ContentGeneratorTool())
-        self.register_tool(MLTool())
-        self.register_tool(SlackTool())
-        self.register_tool(SystemMonitorTool())
+        self.tool_registry.register_tool(ContentGeneratorTool())
+        self.tool_registry.register_tool(MLTool())
+        self.tool_registry.register_tool(SlackTool())
+        self.tool_registry.register_tool(SystemMonitorTool())
 
-        logger.info("All tools registered successfully")
+        # Register Job Automation Tools
+        # Ensure ScrapingAntJobScraper is imported at the top of the file
+        # from .tools.job_automation import ScrapingAntJobScraper
+        try:
+            # Assuming ScrapingAntJobScraper takes api_key from config or env
+            scraping_ant_tool = ScrapingAntJobScraper()
+            self.tool_registry.register_tool(scraping_ant_tool)
+            logger.info(f"Registered tool: {scraping_ant_tool.name}")
+        except Exception as e:
+            logger.error(
+                f"Failed to register ScrapingAntJobScraper: {e}. Ensure dependencies are installed and configured.")
 
-    def register_tool(self, tool: Tool):
-        """Register a new tool with the agent."""
-        self.tool_registry.register_tool(tool)
-        logger.info(f"Registered tool: {tool.name}")
+        # Add other job automation tools here if they exist, e.g.:
+        # from .tools.job_automation import ResumeParserTool, JobMatcherTool, ApplicationOrchestrator
+        # try:
+        #     self.tool_registry.register_tool(ResumeParserTool())
+        #     logger.info("Registered tool: ResumeParserTool")
+        # except Exception as e:
+        #     logger.error(f"Failed to register ResumeParserTool: {e}")
+        # try:
+        #     self.tool_registry.register_tool(JobMatcherTool())
+        #     logger.info("Registered tool: JobMatcherTool")
+        # except Exception as e:
+        #     logger.error(f"Failed to register JobMatcherTool: {e}")
+        # try:
+        #     self.tool_registry.register_tool(ApplicationOrchestrator())
+        #     logger.info("Registered tool: ApplicationOrchestrator")
+        # except Exception as e:
+        #     logger.error(f"Failed to register ApplicationOrchestrator: {e}")
+
+        # logger.info("All tools registered successfully") # This might be premature if some fail
 
     def process_message(self, user_input: str) -> str:
         """Process a user message and return the agent's response."""
