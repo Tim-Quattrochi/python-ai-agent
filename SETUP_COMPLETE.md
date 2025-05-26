@@ -82,8 +82,8 @@ python main.py
 # Email (CONFIGURED ✅)
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
-SMTP_USER=timq82@gmail.com
-SMTP_PASSWORD=zxtv jcui tiid oofs
+SMTP_USER=your_email@gmail.com
+SMTP_PASSWORD=your_gmail_app_password_here
 
 # APIs (CONFIGURE AS NEEDED)
 OPENWEATHER_API_KEY=your_openweather_api_key_here
