@@ -397,7 +397,7 @@ def analytics_dashboard(agent):
         st.subheader("💼 Job Market Trends")
 
         # Sample job market data
-        dates = pd.date_range(start="2024-01-01", end="2024-12-31", freq="M")
+        dates = pd.date_range(start="2024-01-01", end="2024-12-31", freq="ME")
         job_data = {
             "Date": dates,
             "Software Engineer": [450, 520, 480, 600, 550, 620, 580, 640, 690, 720, 680, 750],
